@@ -33,7 +33,7 @@ Base = automap_base()
 Base.prepare(db.engine, reflect=True)
 
 # Save References to Each Table
-Samples_Metadata = Base.classes.sample_metadata
+overdose_metadata = Base.classes.opioid_death_prescription2
 
 #################################################
 # Flask Routes
@@ -44,35 +44,34 @@ def index():
     return render_template("index.html")
 
 @app.route("/metadata/state/<state>")
-def sample_metadata(sample):
+def overdose_by_state(state):
     """Return the MetaData for a given sample."""
     sel = [
-        Samples_Metadata.State,
-        Samples_Metadata.Year,
-        Samples_Metadata.Prescription_Deaths,
-        Samples_Metadata.Population,
-        Samples_Metadata.Crude_Rate_Per_100000,
-        Samples_Metadata.StateAbbr,
-        Samples_Metadata.Prescribing_Rate_Per_100,
+        overdose_metadata.State,
+        overdose_metadata.Year,
+        overdose_metadata.Prescription_Deaths,
+        overdose_metadata.Population,
+        overdose_metadata.Crude_Rate_Per_100000,
+        overdose_metadata.StateAbbr,
+        overdose_metadata.Prescribing_Rate_Per_100,
     ]
 
-    results = db.session.query(*sel).filter(Samples_Metadata.sample == sample).all()
+    results = db.session.query(*sel).all()
 
     # Create a Dictionary Entry for each Row of Metadata Information
-    sample_metadata = {}
+    overdose_by_state = {}
     for result in results:
-        sample_metadata["State"] = result[0]
-        sample_metadata["Year"] = result[1]
-        sample_metadata["Prescription_Deaths"] = result[2]
-        sample_metadata["Population"] = result[3]
-        sample_metadata["Crude_Rate_Per_100000"] = result[4]
-        sample_metadata["StateAbbr"] = result[5]
-        sample_metadata["Prescribing_Rate_Per_100"] = result[6]
+        overdose_by_state["State"] = result[0]
+        overdose_by_state["Year"] = result[1]
+        overdose_by_state["Prescription_Deaths"] = result[2]
+        overdose_by_state["Population"] = result[3]
+        overdose_by_state["Crude_Rate_Per_100000"] = result[4]
+        overdose_by_state["StateAbbr"] = result[5]
+        overdose_by_state["Prescribing_Rate_Per_100"] = result[6]
 
-    print(sample_metadata)
-    return jsonify(sample_metadata)
+    print(overdose_by_state)
+    return jsonify(overdose_by_state)
 
 
 if __name__ == "__main__":
-    port = int(os.environ.get('PORT', 5000))
-    app.run(host='0.0.0.0', port=port)
+    app.run()
