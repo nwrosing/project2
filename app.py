@@ -43,34 +43,50 @@ def index():
     """Return the homepage."""
     return render_template("index.html")
 
-@app.route("/metadata/state/<state>")
-def overdose_by_state(state):
-    """Return the MetaData for a given sample."""
+@app.route("/metadata/year/<year>")
+def overdose_by_year(year):
     sel = [
         overdose_metadata.State,
-        overdose_metadata.Year,
-        overdose_metadata.Prescription_Deaths,
-        overdose_metadata.Population,
-        overdose_metadata.Crude_Rate_Per_100000,
-        overdose_metadata.StateAbbr,
-        overdose_metadata.Prescribing_Rate_Per_100,
+        getattr(overdose_metadata, 'Y_'+year),
     ]
 
     results = db.session.query(*sel).all()
 
-    # Create a Dictionary Entry for each Row of Metadata Information
-    overdose_by_state = {}
-    for result in results:
-        overdose_by_state["State"] = result[0]
-        overdose_by_state["Year"] = result[1]
-        overdose_by_state["Prescription_Deaths"] = result[2]
-        overdose_by_state["Population"] = result[3]
-        overdose_by_state["Crude_Rate_Per_100000"] = result[4]
-        overdose_by_state["StateAbbr"] = result[5]
-        overdose_by_state["Prescribing_Rate_Per_100"] = result[6]
+    # Format the data to send as json
+    data = {
+        "states": [result[0] for result in results],
+        "year": [result[1] for result in results],
+        "Prescription_Deaths": [result[2] for result in results],
+        "Population": [result[3] for result in results],
+        "Crude_Rate_Per_100000": [result[4] for result in results],
+        "StateAbbr": [result[5] for result in results],
+        "Prescribing_Rate_Per_100": [result[6] for result in results]
+    }
 
-    print(overdose_by_state)
-    return jsonify(overdose_by_state)
+    return jsonify(data)
+
+@app.route("/metadata/state/<state>")
+def overdose_by_state(state):
+
+    stmt = db.session.query(overdose_metadata).statement
+
+    df = pd.read_sql_query(stmt, db.session.bind)
+
+    sample_data = df.loc[df['State'] == state, :]
+
+    return jsonify(list(df.columns)[1:])
+
+    data = {
+        "states": [result[0] for result in results],
+        "year": [result[1] for result in results],
+        "Prescription_Deaths": [result[2] for result in results],
+        "Population": [result[3] for result in results],
+        "Crude_Rate_Per_100000": [result[4] for result in results],
+        "StateAbbr": [result[5] for result in results],
+        "Prescribing_Rate_Per_100": [result[6] for result in results]
+    }
+
+    return jsonify(data)
 
 
 if __name__ == "__main__":
